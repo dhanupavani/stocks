@@ -1,0 +1,240 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #e0f7fa; /* Light blue background */
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #00796b; /* Dark teal background for header */
+    color: white;
+    padding: 10px 0;
+    text-align: center;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+
+nav ul li {
+    margin: 0 10px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    display: block;
+}
+
+nav ul li a:hover {
+    background-color: #004d40; /* Darker teal on hover */
+    border-radius: 5px;
+}
+
+main {
+    padding: 20px;
+    text-align: center;
+}
+
+h1 {
+    color: #333;
+}
+
+h2 {
+    color: #555;
+}
+
+table {
+    width: 80%;
+    margin: 0 auto;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 12px;
+    text-align: center;
+}
+
+th {
+    background-color: #00796b; /* Match header background */
+    color: white;
+}
+
+tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+tr:hover {
+    background-color: #e0f2f1; /* Light teal on hover */
+}
+
+/* Add this to your styles.css */
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.form-buttons {
+    text-align: center;
+}
+
+.form-buttons input[type="submit"],
+.form-buttons input[type="reset"] {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.form-buttons input[type="submit"] {
+    background-color: #00796b; /* Dark teal background */
+    color: white;
+}
+
+.form-buttons input[type="submit"]:hover {
+    background-color: #004d40; /* Darker teal on hover */
+}
+
+.form-buttons input[type="reset"] {
+    background-color: #e0e0e0; /* Light grey background */
+}
+
+.form-buttons input[type="reset"]:hover {
+    background-color: #bdbdbd; /* Darker grey on hover */
+}
+
+form {
+    max-width: 600px; /* Adjust the width to fit your design */
+    margin: 0 auto; /* Center the form horizontally */
+    text-align: left; /* Align text to the left for better readability */
+}
+
+/* Ensure each form group is displayed as a block with margin */
+.form-group {
+    margin-bottom: 20px; /* Increase spacing between form fields */
+}
+
+/* Style for form labels */
+.form-group label {
+    display: block;
+    margin-bottom: 8px; /* Space between label and input */
+    font-weight: bold;
+    color: #333; /* Dark text color for better readability */
+}
+
+/* Style for form inputs */
+.form-group input[type="text"],
+.form-group input[type="number"] {
+    width: calc(100% - 22px); /* Adjust width to fit padding and border */
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Style for form submit and reset buttons */
+.form-buttons {
+    margin-top: 20px; /* Space above the buttons */
+}
+
+.form-buttons input[type="submit"],
+.form-buttons input[type="reset"] {
+    padding: 12px 25px; /* Adjust padding for better size */
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0 10px; /* Space between buttons */
+}
+
+/* Style for submit button */
+.form-buttons input[type="submit"] {
+    background-color: #00796b; /* Dark teal background */
+    color: white;
+}
+
+.form-buttons input[type="submit"]:hover {
+    background-color: #004d40; /* Darker teal on hover */
+}
+
+/* Style for reset button */
+.form-buttons input[type="reset"] {
+    background-color: #e0e0e0; /* Light grey background */
+}
+
+.form-buttons input[type="reset"]:hover {
+    background-color: #bdbdbd; /* Darker grey on hover */
+}
+body {
+    font-family: Arial, sans-serif;
+    background-color: #e0f7fa; /* Light blue background */
+    margin: 0;
+    padding: 0;
+}
+header {
+    background-color: #00796b; /* Dark teal background for header */
+    color: white;
+    padding: 10px 0;
+    text-align: center;
+}
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+nav ul li {
+    margin: 0 10px;
+}
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    display: block;
+}
+nav ul li a:hover {
+    background-color: #004d40; /* Darker teal on hover */
+    border-radius: 5px;
+}
+main {
+    padding: 20px;
+    text-align: center;
+}
+table {
+    width: 80%;
+    margin: 0 auto;
+    border-collapse: collapse;
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+th, td {
+    padding: 12
+
