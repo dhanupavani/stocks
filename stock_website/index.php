@@ -78,8 +78,8 @@
         </nav>
     </header>
     <main>
-        <h1>Welcome to Stocks Management</h1>
-        <h2>Total Stocks</h2>
+        <h1>Welcome to Your Stock Portfolio</h1>
+        <h2>Current Stock Holdings</h2>
         <table>
             <tr>
                 <th>Name</th>
@@ -88,8 +88,6 @@
                 <th>Total Shares</th>
                 <th>Average Share Price</th>
                 <th>Target Price</th>
-                <th>Sold At</th>
-                <th>Profit</th>
             </tr>
             <?php
             include('db_connect.php'); // Ensure this file has your DB connection details
@@ -100,7 +98,6 @@
 
             if ($result->num_rows > 0) {
                 while($row = $result->fetch_assoc()) {
-                    $profit = ($row['Sold_At'] - $row['Bought_At']) * $row['total_shares'];
                     echo "<tr>
                             <td>{$row['name']}</td>
                             <td>{$row['Bought_At']}</td>
@@ -108,12 +105,10 @@
                             <td>{$row['total_shares']}</td>
                             <td>{$row['average_share_price']}</td>
                             <td>{$row['target_price']}</td>
-                            <td>{$row['Sold_At']}</td>
-                            <td>{$profit}</td>
                           </tr>";
                 }
             } else {
-                echo "<tr><td colspan='8'>No stocks found</td></tr>";
+                echo "<tr><td colspan='6'>No stocks found</td></tr>";
             }
 
             $conn->close();

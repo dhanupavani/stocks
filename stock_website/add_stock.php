@@ -15,7 +15,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $total_shares = $_POST['total_shares'];
     $average_share_price = $_POST['average_share_price'];
     $target_price = $_POST['target_price'];
-    $sold_at = isset($_POST['sold_at']) ? $_POST['sold_at'] : NULL;
 
     // Check if the stock exists
     $sql = "SELECT * FROM Stocks WHERE name = ?";
@@ -34,9 +33,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $new_total_shares = $existing_shares + $total_shares;
         $new_average_price = (($existing_shares * $row['average_share_price']) + $investment_amount) / $new_total_shares;
 
-        $update_sql = "UPDATE Stocks SET total_shares = ?, investment_amount = ?, average_share_price = ?, target_price = ?, Sold_At = ?, Bought_At = ? WHERE name = ?";
+        $update_sql = "UPDATE Stocks SET total_shares = ?, investment_amount = ?, average_share_price = ?, target_price = ?, Bought_At = ? WHERE name = ?";
         $update_stmt = $conn->prepare($update_sql);
-        $update_stmt->bind_param("dddddss", $new_total_shares, $investment_amount, $new_average_price, $target_price, $sold_at, $bought_at, $name);
+        $update_stmt->bind_param("ddddds", $new_total_shares, $investment_amount, $new_average_price, $target_price, $bought_at, $name);
 
         if ($update_stmt->execute()) {
             $message = "Stock record updated successfully";
@@ -47,9 +46,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $update_stmt->close();
     } else {
         // Stock does not exist, insert a new record
-        $insert_sql = "INSERT INTO Stocks (name, Bought_At, investment_amount, total_shares, average_share_price, target_price, Sold_At) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $insert_sql = "INSERT INTO Stocks (name, Bought_At, investment_amount, total_shares, average_share_price, target_price) VALUES (?, ?, ?, ?, ?, ?)";
         $insert_stmt = $conn->prepare($insert_sql);
-        $insert_stmt->bind_param("ssddddd", $name, $bought_at, $investment_amount, $total_shares, $average_share_price, $target_price, $sold_at);
+        $insert_stmt->bind_param("sddddd", $name, $bought_at, $investment_amount, $total_shares, $average_share_price, $target_price);
 
         if ($insert_stmt->execute()) {
             $message = "New stock record created successfully";
@@ -72,6 +71,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Stock</title>
     <link rel="stylesheet" href="styles.css">
+    <script>
+        function calculateShares() {
+            var boughtAt = document.getElementById('bought_at').value;
+            var investmentAmount = document.getElementById('investment_amount').value;
+            var totalShares = 0;
+            if (boughtAt && investmentAmount) {
+                totalShares = investmentAmount / boughtAt;
+            }
+            document.getElementById('total_shares').value = totalShares.toFixed(2);
+        }
+    </script>
 </head>
 <body>
     <header>
@@ -98,18 +108,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <div class="form-group">
                 <label for="bought_at">Bought At:</label>
-                <input type="number" id="bought_at" name="bought_at" step="0.01" required>
+                <input type="number" id="bought_at" name="bought_at" step="0.01" required oninput="calculateShares()">
             </div>
 
             <div class="form-group">
-
                 <label for="investment_amount">Investment Amount:</label>
-                <input type="number" id="investment_amount" name="investment_amount" step="0.01" required>
+                <input type="number" id="investment_amount" name="investment_amount" step="0.01" required oninput="calculateShares()">
             </div>
 
             <div class="form-group">
                 <label for="total_shares">Total Shares:</label>
-                <input type="number" id="total_shares" name="total_shares" required>
+                <input type="number" id="total_shares" name="total_shares" step="0.01" readonly required>
             </div>
 
             <div class="form-group">
@@ -120,11 +129,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="form-group">
                 <label for="target_price">Target Price:</label>
                 <input type="number" id="target_price" name="target_price" step="0.01" required>
-            </div>
-
-            <div class="form-group">
-                <label for="sold_at">Sold At:</label>
-                <input type="number" id="sold_at" name="sold_at" step="0.01">
             </div>
 
             <div class="form-buttons">
