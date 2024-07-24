@@ -13,13 +13,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $bought_at = $_POST['bought_at'];
     $investment_amount = $_POST['investment_amount'];
     $total_shares = $_POST['total_shares'];
-    $average_share_price = $_POST['average_share_price'];
     $target_price = $_POST['target_price'];
 
     // Check if the stock exists
     $sql = "SELECT * FROM Stocks WHERE name = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $name);
+    $stmt->bind_param("s", $name); // The name is a string
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -31,11 +30,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Update total shares and average share price
         $new_total_shares = $existing_shares + $total_shares;
-        $new_average_price = (($existing_shares * $row['average_share_price']) + $investment_amount) / $new_total_shares;
+        $new_investment_amount = $existing_investment_amount + $investment_amount;
+        $new_average_price = $new_investment_amount / $new_total_shares;
 
-        $update_sql = "UPDATE Stocks SET total_shares = ?, investment_amount = ?, average_share_price = ?, target_price = ?, Bought_At = ? WHERE name = ?";
+        $update_sql = "UPDATE Stocks SET total_shares = ?, investment_amount = ?, average_share_price = ?, target_price = ? WHERE name = ?";
         $update_stmt = $conn->prepare($update_sql);
-        $update_stmt->bind_param("ddddds", $new_total_shares, $investment_amount, $new_average_price, $target_price, $bought_at, $name);
+        $update_stmt->bind_param("dddds", $new_total_shares, $new_investment_amount, $new_average_price, $target_price, $name); // Use the correct types: double, double, double, double, string
 
         if ($update_stmt->execute()) {
             $message = "Stock record updated successfully";
@@ -48,7 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Stock does not exist, insert a new record
         $insert_sql = "INSERT INTO Stocks (name, Bought_At, investment_amount, total_shares, average_share_price, target_price) VALUES (?, ?, ?, ?, ?, ?)";
         $insert_stmt = $conn->prepare($insert_sql);
-        $insert_stmt->bind_param("sddddd", $name, $bought_at, $investment_amount, $total_shares, $average_share_price, $target_price);
+        $insert_stmt->bind_param("sddddd", $name, $bought_at, $investment_amount, $total_shares, $bought_at, $target_price); // Use the correct types: string, double, double, double, double, double
 
         if ($insert_stmt->execute()) {
             $message = "New stock record created successfully";
@@ -103,7 +103,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <form action="add_stock.php" method="post">
             <div class="form-group">
                 <label for="name">Name:</label>
-                <input type="text" id="name" name="name" required>
+                <select id="name" name="name" required>
+                    <?php
+                    include('db_connect.php');
+                    $sql = "SELECT name FROM all_stocks";
+                    $result = $conn->query($sql);
+
+                    if ($result->num_rows > 0) {
+                        while ($row = $result->fetch_assoc()) {
+                            echo "<option value='{$row['name']}'>{$row['name']}</option>";
+                        }
+                    } else {
+                        echo "<option value=''>No stocks available</option>";
+                    }
+
+                    $conn->close();
+                    ?>
+                </select>
             </div>
 
             <div class="form-group">
@@ -119,11 +135,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="form-group">
                 <label for="total_shares">Total Shares:</label>
                 <input type="number" id="total_shares" name="total_shares" step="0.01" readonly required>
-            </div>
-
-            <div class="form-group">
-                <label for="average_share_price">Average Share Price:</label>
-                <input type="number" id="average_share_price" name="average_share_price" step="0.01" required>
             </div>
 
             <div class="form-group">
