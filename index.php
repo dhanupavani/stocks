@@ -2,7 +2,7 @@
 include('db_connect.php');
 
 // Fetch total investment
-$sql = "SELECT SUM(investment_amount) AS total_invested FROM Stocks WHERE name IS NOT NULL";
+$sql = "SELECT SUM(investment_amount) AS total_invested FROM Stocks WHERE name IS NOT NULL AND is_deleted = 0";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -83,7 +83,7 @@ $stmt->close();
             <tbody>
                 <?php
                 // Fetch portfolio details
-                $sql = "SELECT name, purchase_date, investment_amount, average_share_price, total_shares, target_price FROM Stocks";
+                $sql = "SELECT name, purchase_date, investment_amount, average_share_price, total_shares, target_price FROM Stocks WHERE is_deleted = 0";
                 $stmt = $conn->prepare($sql);
                 $stmt->execute();
                 $result = $stmt->get_result();

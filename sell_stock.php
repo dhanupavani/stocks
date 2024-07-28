@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $sale_date = date('Y-m-d H:i:s'); // Current date and time
 
     // Check if the stock exists and get the current details
-    $sql = "SELECT * FROM Stocks WHERE name = ?";
+    $sql = "SELECT * FROM Stocks WHERE name = ? AND is_deleted = FALSE";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $name);
     $stmt->execute();
@@ -27,61 +27,86 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $current_shares = $row['total_shares'];
         $average_share_price = $row['average_share_price'];
         $current_investment = $row['investment_amount'];
+        $stock_id = $row['id'];
 
         if ($shares_sold <= $current_shares) {
             $remaining_shares = $current_shares - $shares_sold;
             $released_money = $average_share_price * $shares_sold; // Use the original purchase price
             $profit_amount = ($sold_at - $average_share_price) * $shares_sold;
-            $new_investment_amount = $current_investment - $released_money;
+            $new_investment_amount = $average_share_price * $remaining_shares;
 
-            if ($remaining_shares > 0) {
-                // Update the stock record
-                $update_sql = "UPDATE Stocks SET total_shares = ?, investment_amount = ? WHERE name = ?";
-                $update_stmt = $conn->prepare($update_sql);
-                $update_stmt->bind_param("dds", $remaining_shares, $new_investment_amount, $name);
+            // Insert transaction into Transactions table
+            $transaction_sql = "INSERT INTO Transactions (stock_id, transaction_type, quantity, price, transaction_date) VALUES (?, 'sell', ?, ?, ?)";
+            $transaction_stmt = $conn->prepare($transaction_sql);
+            $transaction_stmt->bind_param("iids", $stock_id, $shares_sold, $sold_at, $sale_date);
 
-                if ($update_stmt->execute()) {
-                    // Insert sold stock details into Sold_Stocks table
-                    $insert_sql = "INSERT INTO Sold_Stocks (name, released_money, profit_amount, sale_date) VALUES (?, ?, ?, ?)";
-                    $insert_stmt = $conn->prepare($insert_sql);
-                    $insert_stmt->bind_param("sdds", $name, $released_money, $profit_amount, $sale_date);
+            if ($transaction_stmt->execute()) {
+                $transaction_stmt->close();
 
-                    if ($insert_stmt->execute()) {
-                        $message = "Stock sold and recorded successfully. Released Money: ₹{$released_money}, Profit: ₹{$profit_amount}";
+                if ($remaining_shares > 0) {
+                    // Update the stock record
+                    $update_sql = "UPDATE Stocks SET total_shares = ?, investment_amount = ? WHERE name = ?";
+                    $update_stmt = $conn->prepare($update_sql);
+                    $update_stmt->bind_param("dds", $remaining_shares, $new_investment_amount, $name);
+
+                    if ($update_stmt->execute()) {
+                        // Insert sold stock details into Sold_Stocks table
+                        $insert_sql = "INSERT INTO Sold_Stocks (name, released_money, profit_amount, sale_date) VALUES (?, ?, ?, ?)";
+                        $insert_stmt = $conn->prepare($insert_sql);
+                        $insert_stmt->bind_param("sdds", $name, $released_money, $profit_amount, $sale_date);
+
+                        if ($insert_stmt->execute()) {
+                            $message = "Stock sold and recorded successfully. Released Money: ₹{$released_money}, Profit: ₹{$profit_amount}";
+                        } else {
+                            $message = "Error inserting sold stock: " . $insert_stmt->error;
+                        }
+
+                        $insert_stmt->close();
                     } else {
-                        $message = "Error inserting sold stock: " . $insert_stmt->error;
+                        $message = "Error updating stock record: " . $update_stmt->error;
                     }
 
-                    $insert_stmt->close();
+                    $update_stmt->close();
                 } else {
-                    $message = "Error updating stock record: " . $update_stmt->error;
+                    // Mark the stock record as deleted if remaining shares are zero
+                    $delete_stock_sql = "UPDATE Stocks SET is_deleted = TRUE WHERE id = ?";
+                    $delete_stock_stmt = $conn->prepare($delete_stock_sql);
+                    $delete_stock_stmt->bind_param("i", $stock_id);
+
+                    if ($delete_stock_stmt->execute()) {
+                        // Insert sold stock details into Sold_Stocks table
+                        $insert_sql = "INSERT INTO Sold_Stocks (name, released_money, profit_amount, sale_date) VALUES (?, ?, ?, ?)";
+                        $insert_stmt = $conn->prepare($insert_sql);
+                        $insert_stmt->bind_param("sdds", $name, $released_money, $profit_amount, $sale_date);
+
+                        if ($insert_stmt->execute()) {
+                            $message = "Stock sold and recorded successfully. Released Money: ₹{$released_money}, Profit: ₹{$profit_amount}";
+                        } else {
+                            $message = "Error inserting sold stock: " . $insert_stmt->error;
+                        }
+
+                        $insert_stmt->close();
+                    } else {
+                        $message = "Error marking stock as deleted: " . $delete_stock_stmt->error;
+                    }
+
+                    $delete_stock_stmt->close();
                 }
 
-                $update_stmt->close();
+                // Update total released money and profit/loss in Total_Investment table
+                $update_total_sql = "UPDATE Total_Investment SET total_released_money = total_released_money + ?, total_profit_loss = total_profit_loss + ? WHERE id = 1";
+                $update_total_stmt = $conn->prepare($update_total_sql);
+                $update_total_stmt->bind_param("dd", $released_money, $profit_amount);
+
+                if ($update_total_stmt->execute()) {
+                    // No need to update $message here as it's updated above
+                } else {
+                    $message = "Error preparing update statement: " . $update_total_stmt->error;
+                }
+
+                $update_total_stmt->close();
             } else {
-                // Delete the stock record if remaining shares are zero
-                $delete_sql = "DELETE FROM Stocks WHERE name = ?";
-                $delete_stmt = $conn->prepare($delete_sql);
-                $delete_stmt->bind_param("s", $name);
-
-                if ($delete_stmt->execute()) {
-                    // Insert sold stock details into Sold_Stocks table
-                    $insert_sql = "INSERT INTO Sold_Stocks (name, released_money, profit_amount, sale_date) VALUES (?, ?, ?, ?)";
-                    $insert_stmt = $conn->prepare($insert_sql);
-                    $insert_stmt->bind_param("sdds", $name, $released_money, $profit_amount, $sale_date);
-
-                    if ($insert_stmt->execute()) {
-                        $message = "Stock sold and recorded successfully. Released Money: ₹{$released_money}, Profit: ₹{$profit_amount}";
-                    } else {
-                        $message = "Error inserting sold stock: " . $insert_stmt->error;
-                    }
-
-                    $insert_stmt->close();
-                } else {
-                    $message = "Error deleting stock record: " . $delete_stmt->error;
-                }
-
-                $delete_stmt->close();
+                $message = "Error inserting transaction: " . $transaction_stmt->error;
             }
         } else {
             $message = "Error: You don't have enough shares to sell.";
@@ -125,7 +150,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <label for="name">Name:</label>
                 <select id="name" name="name" required>
                     <?php
-                    $sql = "SELECT name FROM Stocks WHERE total_shares > 0";
+                    $sql = "SELECT name FROM Stocks WHERE total_shares > 0 AND is_deleted = FALSE";
                     $result = $conn->query($sql);
 
                     if ($result->num_rows > 0) {

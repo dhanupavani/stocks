@@ -28,59 +28,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $row = $result->fetch_assoc();
             $existing_shares = $row['total_shares'];
             $existing_investment_amount = $row['investment_amount'];
-            $existing_average_price = $row['average_share_price'];
 
-            // Check if the stock was previously deleted
-            if ($row['is_deleted'] == 1) {
-                // Reactivate the stock and set fresh values
-                $new_total_shares = $total_shares;
-                $new_investment_amount = $investment_amount;
-                $new_average_price = $investment_amount / $total_shares;
-                $is_deleted = 0; // Reactivate the stock
-            } else {
-                // Continue with existing data and add new values
-                $new_total_shares = $existing_shares + $total_shares;
-                $new_investment_amount = $existing_investment_amount + $investment_amount;
-                $new_average_price = ($existing_investment_amount + $investment_amount) / ($existing_shares + $total_shares);
-                $is_deleted = $row['is_deleted'];
-            }
+            $new_total_shares = $existing_shares + $total_shares;
+            $new_investment_amount = $existing_investment_amount + $investment_amount;
+            $new_average_price = $new_investment_amount / $new_total_shares;
 
-            // Update the stock record
-            $update_sql = "UPDATE Stocks SET total_shares = ?, investment_amount = ?, average_share_price = ?, target_price = ?, purchase_date = ?, is_deleted = ? WHERE name = ?";
+            $update_sql = "UPDATE Stocks SET total_shares = ?, investment_amount = ?, average_share_price = ?, target_price = ?, purchase_date = ? WHERE name = ?";
             $update_stmt = $conn->prepare($update_sql);
+            $update_stmt->bind_param("ddddss", $new_total_shares, $new_investment_amount, $new_average_price, $target_price, $purchase_date, $name);
 
-            // Verify and print values for debugging
-            if ($update_stmt) {
-                $update_stmt->bind_param("ddddsis", $new_total_shares, $new_investment_amount, $new_average_price, $target_price, $purchase_date, $is_deleted, $name);
-                if ($update_stmt->execute()) {
-                    // Insert transaction record
-                    $transaction_sql = "INSERT INTO Transactions (stock_id, transaction_type, quantity, price, transaction_date) VALUES (?, 'buy', ?, ?, ?)";
-                    $transaction_stmt = $conn->prepare($transaction_sql);
-                    $stock_id = $row['id']; // Assuming there's an 'id' field in the Stocks table
-                    $transaction_stmt->bind_param("idds", $stock_id, $total_shares, $bought_at, $purchase_date);
-                    $transaction_stmt->execute();
+            if ($update_stmt->execute()) {
+                // Insert transaction record
+                $transaction_sql = "INSERT INTO Transactions (stock_id, transaction_type, quantity, price, transaction_date) VALUES (?, 'buy', ?, ?, ?)";
+                $transaction_stmt = $conn->prepare($transaction_sql);
+                $stock_id = $row['id']; // Assuming there's an 'id' field in the Stocks table
+                $transaction_stmt->bind_param("idds", $stock_id, $total_shares, $bought_at, $purchase_date);
+                $transaction_stmt->execute();
 
-                    $message = "Stock record updated successfully";
+                $message = "Stock record updated successfully";
 
-                    // Update total investment in Total_Investment table
-                    $update_investment_sql = "UPDATE Total_Investment SET total_invested = total_invested + ? WHERE id = 1";
-                    $update_investment_stmt = $conn->prepare($update_investment_sql);
-                    if ($update_investment_stmt) {
-                        $update_investment_stmt->bind_param("d", $investment_amount);
-                        $update_investment_stmt->execute();
-                        $update_investment_stmt->close();
-                    } else {
-                        $message = "Error preparing update statement: " . $conn->error;
-                    }
+                // Update total investment in Total_Investment table
+                $update_investment_sql = "UPDATE Total_Investment SET total_invested = total_invested + ? WHERE id = 1";
+                $update_investment_stmt = $conn->prepare($update_investment_sql);
+                if ($update_investment_stmt) {
+                    $update_investment_stmt->bind_param("d", $investment_amount);
+                    $update_investment_stmt->execute();
+                    $update_investment_stmt->close();
                 } else {
-                    $message = "Error updating record: " . $update_stmt->error;
+                    $message = "Error preparing update statement: " . $conn->error;
                 }
-                $update_stmt->close();
             } else {
-                $message = "Error preparing update statement: " . $conn->error;
+                $message = "Error updating record: " . $update_stmt->error;
             }
+            $update_stmt->close();
         } else {
-            // Insert new stock record
             $insert_sql = "INSERT INTO Stocks (name, Bought_At, investment_amount, total_shares, average_share_price, target_price, purchase_date) VALUES (?, ?, ?, ?, ?, ?, ?)";
             $insert_stmt = $conn->prepare($insert_sql);
             $insert_stmt->bind_param("sddddds", $name, $bought_at, $investment_amount, $total_shares, $bought_at, $target_price, $purchase_date);

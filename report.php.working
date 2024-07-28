@@ -1,9 +1,4 @@
 <?php
-// Enable error reporting for debugging
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
 include 'db_connect.php';
 
 if ($conn->connect_error) {
@@ -13,7 +8,7 @@ if ($conn->connect_error) {
 $start_date = isset($_POST['start_date']) ? $_POST['start_date'] : '';
 $end_date = isset($_POST['end_date']) ? $_POST['end_date'] : '';
 
-$sql = "SELECT t.*, s.name as stock_name FROM Transactions t JOIN Stocks s ON t.stock_id = s.id WHERE 1=1";
+$sql = "SELECT t.*, s.name as stock_name FROM Transactions t JOIN Stocks s ON t.stock_id = s.id WHERE t.quantity IS NOT NULL AND t.price IS NOT NULL";
 if ($start_date && $end_date) {
     $sql .= " AND t.transaction_date BETWEEN ? AND ?";
 }
@@ -25,9 +20,6 @@ if ($start_date && $end_date) {
     $stmt->bind_param("ss", $start_date, $end_date);
 }
 
-// Print the SQL query for debugging
-// echo "SQL Query: " . $sql . "<br>"; // Uncomment for debugging
-
 if (!$stmt->execute()) {
     die("Query failed: " . $stmt->error);
 }
@@ -38,11 +30,6 @@ $transactions = [];
 while ($row = $result->fetch_assoc()) {
     $transactions[] = $row;
 }
-
-// Print the fetched data for debugging
-// echo "<pre>";
-// print_r($transactions);
-// echo "</pre>"; // Uncomment for debugging
 
 $conn->close();
 ?>
@@ -88,23 +75,23 @@ $conn->close();
         <table>
             <thead>
                 <tr>
+                    <th>Date</th>
                     <th>Stock Name</th>
                     <th>Transaction Type</th>
-                    <th>Date</th>
-                    <th>Amount</th>
                     <th>Shares</th>
                     <th>Price</th>
+                    <th>Amount</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($transactions as $transaction): ?>
                     <tr>
+                        <td><?php echo htmlspecialchars($transaction['transaction_date']); ?></td>
                         <td><?php echo htmlspecialchars($transaction['stock_name']); ?></td>
                         <td><?php echo htmlspecialchars($transaction['transaction_type']); ?></td>
-                        <td><?php echo htmlspecialchars($transaction['transaction_date']); ?></td>
-                        <td>₹<?php echo number_format($transaction['price'] * $transaction['quantity'], 2); ?></td>
                         <td><?php echo htmlspecialchars($transaction['quantity']); ?></td>
                         <td>₹<?php echo number_format($transaction['price'], 2); ?></td>
+                        <td>₹<?php echo number_format($transaction['price'] * $transaction['quantity'], 2); ?></td>
                     </tr>
                 <?php endforeach; ?>
                 <?php if (empty($transactions)): ?>
