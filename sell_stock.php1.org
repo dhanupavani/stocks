@@ -127,6 +127,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sell Stock</title>
     <link rel="stylesheet" href="styles.css">
+    <script>
+        function updateMaxShares() {
+            var stocks = <?php
+                $sql = "SELECT name, total_shares FROM Stocks WHERE total_shares > 0 AND is_deleted = FALSE";
+                $result = $conn->query($sql);
+                $stocks = [];
+                if ($result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        $stocks[$row['name']] = $row['total_shares'];
+                    }
+                }
+                echo json_encode($stocks);
+            ?>;
+            var selectedStock = document.getElementById('name').value;
+            var maxShares = stocks[selectedStock];
+            document.getElementById('max_shares').innerText = "Max available shares: " + maxShares;
+            document.getElementById('shares_sold').max = maxShares;
+        }
+    </script>
 </head>
 <body>
     <header>
@@ -137,7 +156,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <li><a href="sell_stock.php">Sell Stocks</a></li>
                 <li><a href="monitor.php">Monitor</a></li>
                 <li><a href="report.php">Report</a></li>
-                <li><a href="chart.php">Chart</a></li>
             </ul>
         </nav>
     </header>
@@ -149,7 +167,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <form action="sell_stock.php" method="post">
             <div class="form-group">
                 <label for="name">Name:</label>
-                <select id="name" name="name" required>
+                <select id="name" name="name" required onchange="updateMaxShares()">
+                    <option value="" disabled selected>Select a stock</option>
                     <?php
                     $sql = "SELECT name FROM Stocks WHERE total_shares > 0 AND is_deleted = FALSE";
                     $result = $conn->query($sql);
@@ -163,6 +182,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     }
                     ?>
                 </select>
+                <span id="max_shares" style="color: grey;"></span>
             </div>
 
             <div class="form-group">

@@ -90,6 +90,7 @@ $conn->close();
                 <li><a href="sell_stock.php">Sell Stocks</a></li>
                 <li><a href="monitor.php">Monitor</a></li>
                 <li><a href="report.php">Report</a></li>
+                <li><a href="chart.php">Chart</a></li>
             </ul>
         </nav>
     </header>

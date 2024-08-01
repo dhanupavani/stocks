@@ -25,9 +25,6 @@ if ($start_date && $end_date) {
     $stmt->bind_param("ss", $start_date, $end_date);
 }
 
-// Print the SQL query for debugging
-// echo "SQL Query: " . $sql . "<br>"; // Uncomment for debugging
-
 if (!$stmt->execute()) {
     die("Query failed: " . $stmt->error);
 }
@@ -38,11 +35,6 @@ $transactions = [];
 while ($row = $result->fetch_assoc()) {
     $transactions[] = $row;
 }
-
-// Print the fetched data for debugging
-// echo "<pre>";
-// print_r($transactions);
-// echo "</pre>"; // Uncomment for debugging
 
 $conn->close();
 ?>
@@ -64,6 +56,7 @@ $conn->close();
                 <li><a href="sell_stock.php">Sell Stocks</a></li>
                 <li><a href="monitor.php">Monitor</a></li>
                 <li><a href="report.php">Report</a></li>
+                <li><a href="chart.php">Chart</a></li>
             </ul>
         </nav>
     </header>
@@ -88,23 +81,23 @@ $conn->close();
         <table>
             <thead>
                 <tr>
+                    <th>Date</th>
                     <th>Stock Name</th>
                     <th>Transaction Type</th>
-                    <th>Date</th>
-                    <th>Amount</th>
-                    <th>Shares</th>
                     <th>Price</th>
+                    <th>Shares</th>
+                    <th>Amount</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($transactions as $transaction): ?>
                     <tr>
+                        <td><?php echo htmlspecialchars($transaction['transaction_date']); ?></td>
                         <td><?php echo htmlspecialchars($transaction['stock_name']); ?></td>
                         <td><?php echo htmlspecialchars($transaction['transaction_type']); ?></td>
-                        <td><?php echo htmlspecialchars($transaction['transaction_date']); ?></td>
-                        <td>₹<?php echo number_format($transaction['price'] * $transaction['quantity'], 2); ?></td>
-                        <td><?php echo htmlspecialchars($transaction['quantity']); ?></td>
                         <td>₹<?php echo number_format($transaction['price'], 2); ?></td>
+                        <td><?php echo htmlspecialchars($transaction['quantity']); ?></td>
+                        <td>₹<?php echo number_format($transaction['price'] * $transaction['quantity'], 2); ?></td>
                     </tr>
                 <?php endforeach; ?>
                 <?php if (empty($transactions)): ?>
