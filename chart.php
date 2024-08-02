@@ -10,8 +10,9 @@ $months = [];
 $monthly_released_money = [];
 $monthly_profit_loss = [];
 $monthly_target = [];
+$monthly_investment = [];
 
-// Fetch monthly released money and profit/loss data
+// Fetch monthly released money, profit/loss data from Sold_Stocks
 $sql_monthly = "
     SELECT
         DATE_FORMAT(sale_date, '%Y-%m') AS month,
@@ -36,6 +37,37 @@ while ($row = $result_monthly->fetch_assoc()) {
     $monthly_target[] = $row['total_released_money'] * 0.05; // 5% of the released money as the target
 }
 
+// Fetch monthly investment data from Investment_Track
+$sql_investment = "
+    SELECT
+        DATE_FORMAT(date, '%Y-%m') AS month,
+        SUM(Investment) AS total_investment
+    FROM
+        Investment_Track
+    GROUP BY
+        DATE_FORMAT(date, '%Y-%m')
+    ORDER BY
+        DATE_FORMAT(date, '%Y-%m') ASC";
+$result_investment = $conn->query($sql_investment);
+
+if ($result_investment === false) {
+    die("Error fetching investment data: " . $conn->error);
+}
+
+$investment_data = [];
+while ($row = $result_investment->fetch_assoc()) {
+    $investment_data[$row['month']] = $row['total_investment'];
+}
+
+// Ensure all months are accounted for in the investment data
+foreach ($months as $month) {
+    if (isset($investment_data[$month])) {
+        $monthly_investment[] = $investment_data[$month];
+    } else {
+        $monthly_investment[] = 0; // Default to 0 if no investment data is available for the month
+    }
+}
+
 $conn->close();
 ?>
 
@@ -44,7 +76,7 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monthly Chart</title>
+    <title>Monthly Bar Chart</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -79,54 +111,48 @@ $conn->close();
                 <li><a href="sell_stock.php">Sell Stocks</a></li>
                 <li><a href="monitor.php">Monitor</a></li>
                 <li><a href="report.php">Report</a></li>
-                <li><a href="chart.php">Chart</a></li>
+                <li><a href="chart2.php">Chart</a></li>
             </ul>
         </nav>
     </header>
     <main>
         <h1>Monthly Performance Chart</h1>
-        <canvas id="monthlyChart" width="400" height="200"></canvas>
+        <canvas id="monthlyBarChart" width="800" height="400"></canvas>
 
         <script>
-            const ctx = document.getElementById('monthlyChart').getContext('2d');
-            const monthlyChart = new Chart(ctx, {
-                type: 'line',
+            const ctx = document.getElementById('monthlyBarChart').getContext('2d');
+            const monthlyBarChart = new Chart(ctx, {
+                type: 'bar',
                 data: {
                     labels: <?php echo json_encode($months); ?>,
                     datasets: [
                         {
+                            label: 'Investment (₹)',
+                            data: <?php echo json_encode($monthly_investment); ?>,
+                            backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                            borderColor: 'rgba(153, 102, 255, 1)',
+                            borderWidth: 1
+                        },
+                        {
                             label: 'Released Money (₹)',
                             data: <?php echo json_encode($monthly_released_money); ?>,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
                             borderColor: 'rgba(75, 192, 192, 1)',
-                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                            fill: false,
-                            pointBackgroundColor: 'rgba(75, 192, 192, 1)',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgba(75, 192, 192, 1)'
+                            borderWidth: 1
                         },
                         {
                             label: 'Profit/Loss (₹)',
                             data: <?php echo json_encode($monthly_profit_loss); ?>,
+                            backgroundColor: 'rgba(255, 99, 132, 0.6)',
                             borderColor: 'rgba(255, 99, 132, 1)',
-                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                            fill: false,
-                            pointBackgroundColor: 'rgba(255, 99, 132, 1)',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgba(255, 99, 132, 1)'
+                            borderWidth: 1
                         },
                         {
                             label: 'Target Profit (₹)',
                             data: <?php echo json_encode($monthly_target); ?>,
+                            backgroundColor: 'rgba(255, 206, 86, 0.6)',
                             borderColor: 'rgba(255, 206, 86, 1)',
-                            backgroundColor: 'rgba(255, 206, 86, 0.2)',
-                            borderDash: [5, 5],
-                            fill: false,
-                            pointBackgroundColor: 'rgba(255, 206, 86, 1)',
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: 'rgba(255, 206, 86, 1)'
+                            borderWidth: 1
                         }
                     ]
                 },
@@ -152,6 +178,7 @@ $conn->close();
                     },
                     scales: {
                         x: {
+                            stacked: false, // Set to false to separate the bars
                             display: true,
                             title: {
                                 display: true,
@@ -159,6 +186,7 @@ $conn->close();
                             }
                         },
                         y: {
+                            stacked: false, // Set to false to separate the bars
                             display: true,
                             title: {
                                 display: true,

@@ -49,6 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $update_sql = "UPDATE Stocks SET total_shares = ?, investment_amount = ?, average_share_price = ?, target_price = ?, purchase_date = ?, is_deleted = ? WHERE name = ?";
             $update_stmt = $conn->prepare($update_sql);
 
+            // Verify and print values for debugging
             if ($update_stmt) {
                 $update_stmt->bind_param("ddddsis", $new_total_shares, $new_investment_amount, $new_average_price, $target_price, $purchase_date, $is_deleted, $name);
                 if ($update_stmt->execute()) {
@@ -70,21 +71,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $update_investment_stmt->close();
                     } else {
                         $message = "Error preparing update statement: " . $conn->error;
-                    }
-
-                    // Insert record into Investment_Track table
-                    $investment_track_sql = "INSERT INTO Investment_Track (Investment, date) VALUES (?, ?)";
-                    $investment_track_stmt = $conn->prepare($investment_track_sql);
-                    if ($investment_track_stmt) {
-                        $investment_track_stmt->bind_param("ds", $investment_amount, $purchase_date);
-                        if ($investment_track_stmt->execute()) {
-                            // Success message (optional)
-                        } else {
-                            $message = "Error inserting into Investment_Track: " . $investment_track_stmt->error;
-                        }
-                        $investment_track_stmt->close();
-                    } else {
-                        $message = "Error preparing insert statement for Investment_Track: " . $conn->error;
                     }
                 } else {
                     $message = "Error updating record: " . $update_stmt->error;
@@ -120,21 +106,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $update_investment_stmt->close();
                 } else {
                     $message = "Error preparing update statement: " . $conn->error;
-                }
-
-                // Insert record into Investment_Track table
-                $investment_track_sql = "INSERT INTO Investment_Track (Investment, date) VALUES (?, ?)";
-                $investment_track_stmt = $conn->prepare($investment_track_sql);
-                if ($investment_track_stmt) {
-                    $investment_track_stmt->bind_param("ds", $investment_amount, $purchase_date);
-                    if ($investment_track_stmt->execute()) {
-                        // Success message (optional)
-                    } else {
-                        $message = "Error inserting into Investment_Track: " . $investment_track_stmt->error;
-                    }
-                    $investment_track_stmt->close();
-                } else {
-                    $message = "Error preparing insert statement for Investment_Track: " . $conn->error;
                 }
             } else {
                 $message = "Error: " . $insert_stmt->error;
