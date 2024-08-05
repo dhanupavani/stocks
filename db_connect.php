@@ -1,9 +1,20 @@
 <?php
+session_start(); // Start the session to access session variables
+
+// Check if the user is logged in and has a valid session
+if (!isset($_SESSION['username']) || !isset($_SESSION['password'])) {
+    die("User not logged in");
+}
+
+// Retrieve the username and password from the session
+$username = $_SESSION['username'];
+$password = $_SESSION['password'];
+
 // Database configuration
 $servername = "localhost"; // or your database server's address
-$username = "dhanu"; // Your MySQL username
-$password = "dhanu412"; // Your MySQL password
-$database = "stock_monitoring"; // Your database name
+
+// Construct the database name dynamically based on the logged-in user
+$database = "stock_monitoring_" . $username;
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $database);
